@@ -11,7 +11,8 @@ fun HomeScreen(
     username: String,
     onNavigateToCamera: () -> Unit,
     onNavigateToQuiz: () -> Unit,
-    onNavigateToMap: () -> Unit
+    onNavigateToMap: () -> Unit,
+    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier

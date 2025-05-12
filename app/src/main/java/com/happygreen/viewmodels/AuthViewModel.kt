@@ -4,12 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.happygreen.data.AuthService
 import com.happygreen.data.RetrofitInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 
 class AuthViewModel : ViewModel() {
 
+    private val _username = MutableStateFlow<String?>(null)
+    val username: StateFlow<String?> = _username
     private val authService: AuthService = RetrofitInstance.api
 
     fun login(
@@ -24,8 +28,8 @@ class AuthViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val token = response.body()?.token
                     if (token != null) {
-                        // Salva il token JWT se necessario
                         onSuccess()
+                        _username.value = email
                     } else {
                         onError("Token non ricevuto.")
                     }
