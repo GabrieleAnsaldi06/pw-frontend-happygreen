@@ -41,6 +41,7 @@ android {
 
 dependencies {
     implementation("com.google.maps.android:maps-compose:6.4.1")
+    implementation(libs.logging.interceptor)
     implementation(libs.play.services.location)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
@@ -62,6 +63,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.navigation.runtime.android)
+    implementation(libs.vision.common)
+    implementation(libs.image.labeling.common)
+    implementation(libs.image.labeling.default.common)
+    implementation(libs.play.services.mlkit.barcode.scanning)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
