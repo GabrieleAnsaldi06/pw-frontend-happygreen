@@ -1,5 +1,7 @@
 package com.example.frontend_happygreen.nav
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -7,10 +9,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.frontend_happygreen.ui.screens.*
-import com.happygreen.ui.screens.LoginScreen
-import com.happygreen.ui.screens.RegisterScreen
+import com.example.frontend_happygreen.ui.screens.LoginScreen
+import com.example.frontend_happygreen.ui.screens.RegisterScreen
 import com.happygreen.viewmodels.AuthViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -63,7 +66,8 @@ fun AppNavGraph(
                 },
                 username = username ?: "Utente",
                 onNavigateToQuiz = { navController.navigate("quiz") },
-                onNavigateToMap = { navController.navigate("map") }
+                onNavigateToMap = { navController.navigate("map") },
+                onNavigateToChallenges = { navController.navigate("challenges") }
             )
         }
 
@@ -77,6 +81,10 @@ fun AppNavGraph(
 
         composable("map") {
             MapScreen()
+        }
+
+        composable("challenges") {
+            ChallengeScreen()
         }
     }
 }

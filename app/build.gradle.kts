@@ -41,6 +41,7 @@ android {
 
 dependencies {
     implementation("com.google.maps.android:maps-compose:6.4.1")
+    implementation ("androidx.compose.material:material-icons-extended")
     implementation(libs.logging.interceptor)
     implementation(libs.play.services.location)
     implementation(libs.androidx.camera.core)

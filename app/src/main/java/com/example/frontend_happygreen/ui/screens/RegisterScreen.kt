@@ -1,4 +1,4 @@
-package com.happygreen.ui.screens
+package com.example.frontend_happygreen.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
