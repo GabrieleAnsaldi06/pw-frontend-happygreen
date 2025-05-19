@@ -41,7 +41,8 @@ android {
 
 dependencies {
     implementation("com.google.maps.android:maps-compose:6.4.1")
-    implementation ("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("io.coil-kt.coil3:coil-compose:3.2.0")
     implementation(libs.logging.interceptor)
     implementation(libs.play.services.location)
     implementation(libs.androidx.camera.core)
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.image.labeling.common)
     implementation(libs.image.labeling.default.common)
     implementation(libs.play.services.mlkit.barcode.scanning)
+    implementation(libs.androidx.foundation.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

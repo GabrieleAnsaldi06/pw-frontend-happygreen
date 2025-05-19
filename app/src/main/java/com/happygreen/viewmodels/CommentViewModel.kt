@@ -1,3 +1,4 @@
+
 package com.happygreen.viewmodels
 
 import androidx.lifecycle.ViewModel
@@ -68,11 +69,12 @@ class CommentViewModel : ViewModel() {
             try {
                 val newComment = Comment(
                     id = 0,  // Il server assegnerà l'ID effettivo
-                    content = content,
-                    createdAt = "", // Il server assegnerà la data
-                    createdBy = 0,  // Il server determinerà l'utente corrente
                     postId = postId,
-                    username = null // Il server assegnerà il nome utente
+                    authorId = 0,  // Il server determinerà l'utente corrente
+                    authorUsername = "",  // Il server assegnerà il nome utente corretto
+                    content = content,
+                    createdAt = "",  // Il server assegnerà la data
+                    updatedAt = ""  // Il server assegnerà la data
                 )
 
                 val response = RetrofitInstance.apiService.addComment(postId, newComment)

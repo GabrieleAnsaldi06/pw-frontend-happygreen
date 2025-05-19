@@ -116,12 +116,12 @@ class ChallengeViewModel : ViewModel() {
 
     // Recupera le sfide completate
     fun getCompletedChallenges(): List<Challenge> {
-        return _uiState.value.challenges.filter { it.completed }
+        return _uiState.value.challenges.filter { it.isCompleted }
     }
 
     // Recupera le sfide non completate
     fun getIncompleteChallenges(): List<Challenge> {
-        return _uiState.value.challenges.filter { !it.completed }
+        return _uiState.value.challenges.filter { !it.isCompleted }
     }
 
     // Recupera le sfide attive (con deadline non scaduta o senza deadline)
@@ -129,7 +129,7 @@ class ChallengeViewModel : ViewModel() {
     fun getActiveChallenges(): List<Challenge> {
         val currentDate = java.time.LocalDate.now().toString()
         return _uiState.value.challenges.filter { challenge ->
-            !challenge.completed && (challenge.deadline == null || challenge.deadline > currentDate)
+            !challenge.isCompleted && (challenge.endDate > currentDate)
         }
     }
 }

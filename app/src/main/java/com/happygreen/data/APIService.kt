@@ -2,6 +2,7 @@ package com.happygreen.data
 
 import com.happygreen.models.*
 import com.happygreen.viewmodels.*
+import com.happygreen.viewmodels.QuizQuestion
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -63,8 +64,8 @@ interface ApiService {
     suspend fun completeChallenge(@Path("id") challengeId: Int): Response<Map<String, Any>>
 
     // Profilo utente e badge
-    @GET("api/profiles/me/")
-    suspend fun getMyProfile(): Response<UserProfile>
+    @GET("api/profiles/{username}/")
+    suspend fun getMyProfile(@Path("username") username: String): Response<UserProfile>
 
     @GET("api/badges/")
     suspend fun getBadges(): Response<List<Badge>>
