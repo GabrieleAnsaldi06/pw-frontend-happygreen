@@ -12,7 +12,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.happygreen.viewmodels.AuthViewModel
-import java.util.regex.Pattern
 
 @Composable
 fun RegisterScreen(
@@ -28,28 +27,6 @@ fun RegisterScreen(
     val isLoading by authViewModel.isLoading.collectAsState()
     val errorMessage by authViewModel.errorMessage.collectAsState()
 
-    // Validation states
-    val isEmailValid by remember(email) {
-        derivedStateOf {
-            email.isNotEmpty() && isValidEmail(email)
-        }
-    }
-    val isPasswordValid by remember(password) {
-        derivedStateOf {
-            password.length >= 8
-        }
-    }
-    val doPasswordsMatch by remember(password, confirmPassword) {
-        derivedStateOf {
-            password == confirmPassword
-        }
-    }
-    val isFormValid by remember(username, isEmailValid, isPasswordValid, doPasswordsMatch) {
-        derivedStateOf {
-            username.isNotEmpty() && isEmailValid && isPasswordValid && doPasswordsMatch
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,14 +34,6 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "HappyGreen",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = "Registrazione",
             style = MaterialTheme.typography.headlineMedium
@@ -82,13 +51,7 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Text,
                 imeAction = ImeAction.Next
             ),
-            enabled = !isLoading,
-            isError = username.isNotEmpty() && username.length < 3,
-            supportingText = {
-                if (username.isNotEmpty() && username.length < 3) {
-                    Text("Almeno 3 caratteri")
-                }
-            }
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -103,13 +66,7 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
-            enabled = !isLoading,
-            isError = email.isNotEmpty() && !isEmailValid,
-            supportingText = {
-                if (email.isNotEmpty() && !isEmailValid) {
-                    Text("Inserisci un'email valida")
-                }
-            }
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -125,13 +82,7 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Next
             ),
-            enabled = !isLoading,
-            isError = password.isNotEmpty() && !isPasswordValid,
-            supportingText = {
-                if (password.isNotEmpty() && !isPasswordValid) {
-                    Text("Almeno 8 caratteri")
-                }
-            }
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -147,13 +98,7 @@ fun RegisterScreen(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
-            enabled = !isLoading,
-            isError = confirmPassword.isNotEmpty() && !doPasswordsMatch,
-            supportingText = {
-                if (confirmPassword.isNotEmpty() && !doPasswordsMatch) {
-                    Text("Le password non corrispondono")
-                }
-            }
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -181,12 +126,16 @@ fun RegisterScreen(
                     username = username,
                     password = password,
                     confirmPassword = confirmPassword,
-                    onSuccess = onRegisterSuccess,
-                    onError = { /* Handled by StateFlow */ }
+                    onSuccess = {
+                        // Dopo la registrazione, naviga al login
+                        onNavigateToLogin()
+                    },
+                    onError = { /* Gestito dallo StateFlow */ }
                 )
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading && isFormValid
+            enabled = !isLoading && email.isNotEmpty() && username.isNotEmpty()
+                    && password.isNotEmpty() && confirmPassword.isNotEmpty()
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
@@ -207,17 +156,4 @@ fun RegisterScreen(
             Text("Hai già un account? Accedi")
         }
     }
-}
-
-private fun isValidEmail(email: String): Boolean {
-    val emailRegex = Pattern.compile(
-        "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
-                "\\@" +
-                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
-                "(" +
-                "\\." +
-                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
-                ")+"
-    )
-    return emailRegex.matcher(email).matches()
 }

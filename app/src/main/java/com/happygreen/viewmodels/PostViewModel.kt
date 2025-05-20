@@ -93,12 +93,10 @@ class PostViewModel : ViewModel() {
     }
 
     fun createPost(
-        title: String,
         content: String,
         groupId: Int,
         latitude: Double? = null,
         longitude: Double? = null,
-        locationName: String? = null,
         imageUrl: String? = null,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -108,17 +106,14 @@ class PostViewModel : ViewModel() {
             try {
                 val newPost = Post(
                     id = 0, // Il server assegnerà l'ID effettivo
-                    title = title,
                     content = content,
-                    authorId = 0,  // Il server determinerà l'utente corrente
-                    authorUsername = "", // Il server assegnerà il nome utente
-                    groupId = groupId,
                     imageUrl = imageUrl,
                     latitude = latitude,
                     longitude = longitude,
-                    locationName = locationName,
                     createdAt = "", // Il server assegnerà la data
-                    updatedAt = ""  // Il server assegnerà la data
+                    createdBy = 0,  // Il server determinerà l'utente corrente
+                    groupId = groupId,
+                    username = null // Il server assegnerà il nome utente
                 )
 
                 val response = RetrofitInstance.apiService.createPost(newPost)

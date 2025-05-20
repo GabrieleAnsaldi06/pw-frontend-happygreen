@@ -97,7 +97,7 @@ fun ChallengeScreen(
             challenge = uiState.selectedChallenge!!,
             onDismiss = { challengeViewModel.clearSelectedChallenge() },
             onComplete = { challengeViewModel.completeChallenge(uiState.selectedChallenge!!.id) },
-            showCompleteButton = !uiState.selectedChallenge!!.isCompleted
+            showCompleteButton = !uiState.selectedChallenge!!.completed
         )
     }
 
@@ -135,7 +135,7 @@ fun ChallengesList(
                 ChallengeItem(
                     challenge = challenge,
                     onClick = { onChallengeClick(challenge) },
-                    showCompleteButton = showCompleteButton && !challenge.isCompleted,
+                    showCompleteButton = showCompleteButton && !challenge.completed,
                     onComplete = { onCompleteChallenge(challenge) }
                 )
             }
@@ -192,7 +192,7 @@ fun ChallengeItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                challenge.endDate?.let {
+                challenge.deadline?.let {
                     Text(
                         "Scadenza: $it",
                         style = MaterialTheme.typography.bodySmall
@@ -232,7 +232,7 @@ fun ChallengeDetailsDialog(
                 Text(challenge.description)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text("Punti: ${challenge.points}")
-                challenge.endDate?.let {
+                challenge.deadline?.let {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Scadenza: $it")
                 }

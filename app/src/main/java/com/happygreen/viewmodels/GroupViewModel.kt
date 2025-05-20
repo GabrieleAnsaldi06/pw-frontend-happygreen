@@ -103,9 +103,8 @@ class GroupViewModel : ViewModel() {
                     id = 0, // Il server assegnerà l'ID effettivo
                     name = name,
                     description = description,
-                    creatorId = 0,   // Il server determinerà l'utente corrente
                     createdAt = "",  // Il server assegnerà la data
-                    updatedAt = "",  // Il server assegnerà la data
+                    createdBy = 0,   // Il server determinerà l'utente corrente
                     members = emptyList()
                 )
                 val response = RetrofitInstance.apiService.createGroup(newGroup)

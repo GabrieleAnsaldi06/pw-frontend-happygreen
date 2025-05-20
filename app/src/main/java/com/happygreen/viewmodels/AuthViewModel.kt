@@ -1,7 +1,6 @@
 package com.happygreen.viewmodels
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.happygreen.data.*
@@ -12,15 +11,13 @@ import retrofit2.HttpException
 import java.io.IOException
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    // Utilizziamo l'istanza singleton di TokenManager
-    private val tokenManager = TokenManager.getInstance()
+    private val tokenManager = TokenManager(application)
     private val authService: AuthService = RetrofitInstance.authService
 
-    // Stati osservabili
     private val _isAuthenticated = MutableStateFlow(tokenManager.isLoggedIn())
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated
 
-    private val _username = MutableStateFlow<String?>(tokenManager.getUsername())
+    private val _username = MutableStateFlow<String?>(null)
     val username: StateFlow<String?> = _username
 
     private val _isLoading = MutableStateFlow(false)
@@ -29,13 +26,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
-    init {
-        // Assicuriamoci che TokenManager sia inizializzato
-        if (TokenManager.getInstance() == null) {
-            TokenManager.initialize(application.applicationContext)
-        }
-    }
-
     fun login(
         username: String,
         password: String,
@@ -43,47 +33,35 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
             try {
-                logDebug("Inizio processo di login per $username")
-                _isLoading.value = true
-                _errorMessage.value = null
-
                 val response = authService.login(LoginRequest(username, password))
-                logDebug("Risposta login - Code: ${response.code()}, Body: ${response.body()}")
 
-                when {
-                    response.isSuccessful -> {
-                        response.body()?.let { tokens ->
-                            tokenManager.saveUserData(
-                                accessToken = tokens.access,
-                                refreshToken = tokens.refresh,
-                                username = username
-                            )
-                            RetrofitInstance.setAuthToken(tokens.access)
-                            _isAuthenticated.value = true
-                            _username.value = username
-                            logDebug("Login riuscito, token salvato")
-                            onSuccess()
-                        } ?: run {
-                            logError("Risposta vuota dal server")
-                            _errorMessage.value = "Errore nel server"
-                            onError("Errore nel server")
-                        }
+                if (response.isSuccessful) {
+                    val tokens = response.body()
+                    if (tokens != null) {
+                        // Salva i token
+                        tokenManager.saveTokens(tokens.access, tokens.refresh)
+                        _isAuthenticated.value = true
+                        _username.value = username
+                        onSuccess()
+                    } else {
+                        onError("Risposta vuota dal server")
                     }
-                    else -> {
-                        val errorMsg = handleErrorResponse(response.code(), response.errorBody()?.string(), "login")
-                        onError(errorMsg)
+                } else {
+                    when (response.code()) {
+                        401 -> onError("Username o password non validi")
+                        else -> onError("Errore: ${response.code()} - ${response.message()}")
                     }
                 }
             } catch (e: IOException) {
-                val errorMsg = handleNetworkError(e)
-                onError(errorMsg)
+                onError("Errore di rete. Verifica la connessione.")
             } catch (e: HttpException) {
-                val errorMsg = handleHttpError(e)
-                onError(errorMsg)
+                onError("Errore del server: ${e.message}")
             } catch (e: Exception) {
-                val errorMsg = handleGenericError(e)
-                onError(errorMsg)
+                onError("Errore sconosciuto: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -98,12 +76,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        viewModelScope.launch {
-            try {
-                logDebug("Inizio registrazione per $email")
-                _isLoading.value = true
-                _errorMessage.value = null
+        if (password != confirmPassword) {
+            onError("Le password non coincidono")
+            return
+        }
 
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+
+            try {
                 val response = authService.register(
                     RegisterRequest(
                         username = username,
@@ -113,80 +95,39 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 )
 
-                logDebug("Risposta registrazione - Code: ${response.code()}, Body: ${response.body()}")
-
-                when {
-                    response.isSuccessful -> {
-                        logDebug("Registrazione riuscita")
-                        onSuccess()
-                    }
-                    else -> {
-                        val errorMsg = handleErrorResponse(response.code(), response.errorBody()?.string(), "registrazione")
-                        onError(errorMsg)
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    when (response.code()) {
+                        400 -> {
+                            // Parsing degli errori dal server
+                            if (errorBody?.contains("username") == true) {
+                                onError("Username già esistente")
+                            } else if (errorBody?.contains("email") == true) {
+                                onError("Email già registrata")
+                            } else {
+                                onError("Errore nella registrazione: $errorBody")
+                            }
+                        }
+                        else -> onError("Errore: ${response.code()}")
                     }
                 }
             } catch (e: IOException) {
-                val errorMsg = handleNetworkError(e)
-                onError(errorMsg)
+                onError("Errore di rete durante la registrazione")
             } catch (e: HttpException) {
-                val errorMsg = handleHttpError(e)
-                onError(errorMsg)
+                onError("Errore del server: ${e.message}")
             } catch (e: Exception) {
-                val errorMsg = handleGenericError(e)
-                onError(errorMsg)
+                onError("Errore sconosciuto: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    private fun handleErrorResponse(code: Int, errorBody: String?, operation: String): String {
-        val errorMsg = when (code) {
-            400 -> {
-                when {
-                    errorBody?.contains("username") == true -> "Username già esistente"
-                    errorBody?.contains("email") == true -> "Email già registrata"
-                    else -> "Richiesta malformata ($operation)"
-                }
-            }
-            401 -> "Credenziali non valide"
-            500 -> "Errore interno del server"
-            else -> "Errore sconosciuto ($code)"
-        }
-        logError("Errore $operation: $errorMsg")
-        _errorMessage.value = errorMsg
-        return errorMsg
-    }
-
-    private fun handleNetworkError(e: IOException): String {
-        val errorMsg = "Errore di connessione: ${e.message}"
-        logError("Errore di rete", e)
-        _errorMessage.value = errorMsg
-        return errorMsg
-    }
-
-    private fun handleHttpError(e: HttpException): String {
-        val errorMsg = "Errore server: ${e.message()}"
-        logError("Errore HTTP ${e.code()}", e)
-        _errorMessage.value = errorMsg
-        return errorMsg
-    }
-
-    private fun handleGenericError(e: Exception): String {
-        val errorMsg = "Errore: ${e.localizedMessage}"
-        logError("Errore generico", e)
-        _errorMessage.value = errorMsg
-        return errorMsg
-    }
-
     fun logout() {
         tokenManager.clearTokens()
         _isAuthenticated.value = false
         _username.value = null
-        logDebug("Logout effettuato")
     }
-
-    // Funzioni di logging
-    private fun logDebug(message: String) = Log.d("AuthDebug", message)
-    private fun logError(message: String, e: Exception? = null) = Log.e("AuthError", message, e)
 }

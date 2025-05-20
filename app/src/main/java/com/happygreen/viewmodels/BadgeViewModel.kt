@@ -2,7 +2,6 @@ package com.happygreen.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.happygreen.data.ApiService
 import com.happygreen.data.RetrofitInstance
 import com.happygreen.models.Badge
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,8 +72,8 @@ class BadgeViewModel : ViewModel() {
     // Filtra i badge per categoria o livello di punti
     fun filterBadgesByRequiredPoints(minPoints: Int, maxPoints: Int): List<Badge> {
         return _uiState.value.badges.filter {
-            it.pointsRequired in minPoints..maxPoints
-        }.sortedBy { it.pointsRequired }
+            it.requiredPoints in minPoints..maxPoints
+        }.sortedBy { it.requiredPoints }
     }
 
     // Ottieni categorie di badge in base ai nomi
