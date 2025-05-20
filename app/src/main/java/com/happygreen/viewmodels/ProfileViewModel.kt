@@ -3,6 +3,7 @@ package com.happygreen.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.happygreen.data.RetrofitInstance
+import com.happygreen.data.TokenManager
 import com.happygreen.models.Badge
 import com.happygreen.models.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,9 @@ class ProfileViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    // Accesso all'istanza di TokenManager usando il pattern Singleton
+    private val tokenManager = TokenManager.getInstance()
+
     init {
         loadUserProfile()
         loadAvailableBadges()
@@ -33,7 +37,9 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val response = RetrofitInstance.apiService.getMyProfile()
+                // Ora usiamo tokenManager per ottenere lo username
+                val username = tokenManager.getUsername()
+                val response = RetrofitInstance.apiService.getMyProfile(username = username!!)
                 if (response.isSuccessful) {
                     val profile = response.body()
                     _uiState.update { it.copy(userProfile = profile, isLoading = false) }
@@ -88,7 +94,7 @@ class ProfileViewModel : ViewModel() {
 
         // Ritorniamo i badge che l'utente ha già sbloccato in base ai punti
         return availableBadges.filter {
-            it.requiredPoints <= profile.points && !earnedBadgeIds.contains(it.id)
+            it.pointsRequired <= profile.points && !earnedBadgeIds.contains(it.id)
         }
     }
 
@@ -102,8 +108,8 @@ class ProfileViewModel : ViewModel() {
 
         // Ritorniamo i badge che l'utente non ha ancora sbloccato
         return availableBadges.filter {
-            it.requiredPoints > profile.points && !earnedBadgeIds.contains(it.id)
-        }.sortedBy { it.requiredPoints }
+            it.pointsRequired > profile.points && !earnedBadgeIds.contains(it.id)
+        }.sortedBy { it.pointsRequired }
     }
 
     fun refreshProfile() {
