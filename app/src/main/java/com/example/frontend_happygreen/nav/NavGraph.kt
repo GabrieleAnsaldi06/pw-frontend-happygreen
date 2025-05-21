@@ -84,7 +84,7 @@ fun AppNavGraph(
         }
 
         composable("challenges") {
-            ChallengeScreen()
+            ChallengeScreen(authViewModel)
         }
     }
 }

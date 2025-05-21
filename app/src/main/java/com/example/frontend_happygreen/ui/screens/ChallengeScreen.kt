@@ -13,11 +13,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.happygreen.models.Challenge
+import com.happygreen.viewmodels.AuthViewModel
 import com.happygreen.viewmodels.ChallengeViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChallengeScreen(
+    authViewModel: AuthViewModel,
     challengeViewModel: ChallengeViewModel = viewModel()
 ) {
     val uiState by challengeViewModel.uiState.collectAsState()
@@ -63,12 +65,18 @@ fun ChallengeScreen(
             TabRow(selectedTabIndex = selectedTabIndex) {
                 Tab(
                     selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
+                    onClick = {
+                        selectedTabIndex = 0
+                        challengeViewModel.getActiveChallenges(authViewModel)
+                    },
                     text = { Text("Sfide Attive") }
                 )
                 Tab(
                     selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
+                    onClick = {
+                        selectedTabIndex = 1
+                        challengeViewModel.getCompletedChallenges(authViewModel)
+                    },
                     text = { Text("Completate") }
                 )
             }
@@ -76,16 +84,16 @@ fun ChallengeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (selectedTabIndex) {
-                0 -> ChallengesList(
-                    challenges = challengeViewModel.getActiveChallenges(),
+                0 -> ActiveChallengesList(
+                    authViewModel = authViewModel,
+                    challengeViewModel = challengeViewModel,
                     onChallengeClick = { challengeViewModel.selectChallenge(it) },
-                    showCompleteButton = true,
                     onCompleteChallenge = { challengeViewModel.completeChallenge(it.id) }
                 )
-                1 -> ChallengesList(
-                    challenges = challengeViewModel.getCompletedChallenges(),
-                    onChallengeClick = { challengeViewModel.selectChallenge(it) },
-                    showCompleteButton = false
+                1 -> CompletedChallengesList(
+                    authViewModel = authViewModel,
+                    challengeViewModel = challengeViewModel,
+                    onChallengeClick = { challengeViewModel.selectChallenge(it) }
                 )
             }
         }
@@ -93,11 +101,20 @@ fun ChallengeScreen(
 
     // Dialog per visualizzare i dettagli della sfida selezionata
     if (uiState.selectedChallenge != null) {
+        var showCompleteButton by remember { mutableStateOf(false) }
+
+        // Verifica lo stato di completamento della sfida selezionata
+        LaunchedEffect(uiState.selectedChallenge) {
+            challengeViewModel.checkCompleted(uiState.selectedChallenge!!, authViewModel) { isCompleted ->
+                showCompleteButton = !isCompleted
+            }
+        }
+
         ChallengeDetailsDialog(
             challenge = uiState.selectedChallenge!!,
             onDismiss = { challengeViewModel.clearSelectedChallenge() },
             onComplete = { challengeViewModel.completeChallenge(uiState.selectedChallenge!!.id) },
-            showCompleteButton = !uiState.selectedChallenge!!.isCompleted
+            showCompleteButton = showCompleteButton
         )
     }
 
@@ -110,34 +127,112 @@ fun ChallengeScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ChallengesList(
-    challenges: List<Challenge>,
+fun ActiveChallengesList(
+    authViewModel: AuthViewModel,
+    challengeViewModel: ChallengeViewModel,
     onChallengeClick: (Challenge) -> Unit,
-    showCompleteButton: Boolean,
-    onCompleteChallenge: (Challenge) -> Unit = {}
+    onCompleteChallenge: (Challenge) -> Unit
 ) {
-    if (challenges.isEmpty()) {
+    val uiState by challengeViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        challengeViewModel.getActiveChallenges(authViewModel)
+    }
+
+    if (uiState.isLoadingActiveChallenges || uiState.isLoadingCompletedChallenges) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "Nessuna sfida disponibile",
-                style = MaterialTheme.typography.bodyLarge
-            )
+            CircularProgressIndicator()
         }
     } else {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(challenges) { challenge ->
-                ChallengeItem(
-                    challenge = challenge,
-                    onClick = { onChallengeClick(challenge) },
-                    showCompleteButton = showCompleteButton && !challenge.isCompleted,
-                    onComplete = { onCompleteChallenge(challenge) }
+        val challenges = uiState.activeChallenges
+
+        if (challenges.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Nessuna sfida attiva disponibile",
+                    style = MaterialTheme.typography.bodyLarge
                 )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(challenges) { challenge ->
+                    var showCompleteButton by remember { mutableStateOf(false) }
+
+                    // Verifica se la sfida è completata utilizzando il callback
+                    LaunchedEffect(challenge.id) {
+                        challengeViewModel.checkCompleted(challenge, authViewModel) { isCompleted ->
+                            showCompleteButton = !isCompleted
+                        }
+                    }
+
+                    ChallengeItem(
+                        challenge = challenge,
+                        onClick = { onChallengeClick(challenge) },
+                        showCompleteButton = showCompleteButton,
+                        onComplete = { onCompleteChallenge(challenge) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun CompletedChallengesList(
+    authViewModel: AuthViewModel,
+    challengeViewModel: ChallengeViewModel,
+    onChallengeClick: (Challenge) -> Unit
+) {
+    val uiState by challengeViewModel.uiState.collectAsState()
+
+    // Carica le sfide completate all'inizio
+    LaunchedEffect(Unit) {
+        challengeViewModel.getCompletedChallenges(authViewModel)
+    }
+
+    if (uiState.isLoadingCompletedChallenges) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        val challenges = uiState.completedChallenges
+
+        if (challenges.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Nessuna sfida completata",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(challenges) { challenge ->
+                    ChallengeItem(
+                        challenge = challenge,
+                        onClick = { onChallengeClick(challenge) },
+                        showCompleteButton = false,
+                        onComplete = { }
+                    )
+                }
             }
         }
     }

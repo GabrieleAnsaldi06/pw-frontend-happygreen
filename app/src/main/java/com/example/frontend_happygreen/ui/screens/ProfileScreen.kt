@@ -136,7 +136,7 @@ fun ProfileScreen(
 
             // Badges section
             BadgesSection(
-                badges = profile.badges,
+                badges = profile.badges?: emptyList(),
                 nextBadges = profileViewModel.calculateNextBadges()
             )
 

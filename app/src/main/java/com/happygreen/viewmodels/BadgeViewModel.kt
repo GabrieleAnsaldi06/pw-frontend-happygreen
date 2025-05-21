@@ -34,7 +34,7 @@ class BadgeViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getBadges()
                 if (response.isSuccessful) {
-                    val badges = response.body() ?: emptyList()
+                    val badges = response.body()?.results ?: emptyList()
                     _uiState.update { it.copy(badges = badges, isLoading = false) }
                 } else {
                     _uiState.update {

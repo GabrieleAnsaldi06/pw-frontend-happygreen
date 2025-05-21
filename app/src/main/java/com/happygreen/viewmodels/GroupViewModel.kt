@@ -33,7 +33,7 @@ class GroupViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getGroups()
                 if (response.isSuccessful) {
-                    val groups = response.body() ?: emptyList()
+                    val groups = response.body()?.results ?: emptyList()
                     _uiState.update { it.copy(groups = groups, isLoading = false) }
                 } else {
                     _uiState.update {

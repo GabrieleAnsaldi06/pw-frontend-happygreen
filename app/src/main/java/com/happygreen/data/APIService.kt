@@ -16,7 +16,7 @@ interface ApiService {
 
     // Gruppi
     @GET("api/groups/")
-    suspend fun getGroups(): Response<List<Group>>
+    suspend fun getGroups(): Response<PaginatedResponse<Group>>
 
     @POST("api/groups/")
     suspend fun createGroup(@Body group: Group): Response<Group>
@@ -29,7 +29,7 @@ interface ApiService {
 
     // Post
     @GET("api/posts/")
-    suspend fun getPosts(@Query("group") groupId: Int? = null): Response<List<Post>>
+    suspend fun getPosts(@Query("group") groupId: Int? = null): Response<PaginatedResponse<Post>>
 
     @POST("api/posts/")
     suspend fun createPost(@Body post: Post): Response<Post>
@@ -38,14 +38,14 @@ interface ApiService {
     suspend fun getPost(@Path("id") postId: Int): Response<Post>
 
     @GET("api/posts/{id}/comments/")
-    suspend fun getPostComments(@Path("id") postId: Int): Response<List<Comment>>
+    suspend fun getPostComments(@Path("id") postId: Int): Response<PaginatedResponse<Comment>>
 
     @POST("api/posts/{id}/comments/")
     suspend fun addComment(@Path("id") postId: Int, @Body comment: Comment): Response<Comment>
 
     // Oggetti riconosciuti
     @GET("api/objects/")
-    suspend fun getObjects(): Response<List<RecognizedObject>>
+    suspend fun getObjects(): Response<PaginatedResponse<RecognizedObject>>
 
     @GET("api/objects/{id}/")
     suspend fun getObject(@Path("id") objectId: Int): Response<RecognizedObject>
@@ -55,20 +55,26 @@ interface ApiService {
 
     // Quiz e sfide
     @GET("api/quizzes/")
-    suspend fun getQuizzes(): Response<List<QuizQuestion>>
+    suspend fun getQuizzes(): Response<PaginatedResponse<QuizQuestion>>
 
     @GET("api/challenges/")
-    suspend fun getChallenges(): Response<List<Challenge>>
+    suspend fun getChallenges(): Response<PaginatedResponse<Challenge>>
+
+    @POST("api/challenges/{id}/join/")
+    suspend fun joinChallenge(@Path("id") challengeId: Int): Response<Map<String, Any>>
 
     @POST("api/challenges/{id}/complete/")
     suspend fun completeChallenge(@Path("id") challengeId: Int): Response<Map<String, Any>>
 
+    @GET("api/challenges/{id}/participants")
+    suspend fun getChallengeParticipantsByID(@Path("id") userId: Int): Response<List<ChallengeParticipation>>
+
     // Profilo utente e badge
-    @GET("api/profiles/{username}/")
-    suspend fun getMyProfile(@Path("username") username: String): Response<UserProfile>
+    @GET("api/profiles/{id}/")
+    suspend fun getMyProfile(@Path("id") id: Int): Response<UserProfile>
 
     @GET("api/badges/")
-    suspend fun getBadges(): Response<List<Badge>>
+    suspend fun getBadges(): Response<PaginatedResponse<Badge>>
 
     // Prodotti e barcode
     @GET("api/products/{barcode}/")
@@ -76,4 +82,7 @@ interface ApiService {
 
     @POST("api/products/lookup/")
     suspend fun lookupProduct(@Body request: Map<String, String>): Response<Product>
+
+    @GET("api/profiles/")
+    suspend fun getProfiles(): Response<PaginatedResponse<UserProfile>>
 }

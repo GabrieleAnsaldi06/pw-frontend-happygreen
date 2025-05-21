@@ -138,7 +138,7 @@ fun MainAppScaffold(
                 MapScreen()
             }
             composable(Screen.Challenges.route) {
-                ChallengeScreen()
+                ChallengeScreen(authViewModel)
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(

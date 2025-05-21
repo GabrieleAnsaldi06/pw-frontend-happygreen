@@ -1,12 +1,14 @@
 package com.happygreen.viewmodels
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.media.Image
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeler
 import com.google.mlkit.vision.label.ImageLabeling
@@ -28,16 +30,25 @@ data class ObjectScanState(
     val error: String? = null
 )
 
-class ObjectScanViewModel : ViewModel() {
+class ObjectScanViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _scanState = MutableStateFlow(ObjectScanState())
     val scanState: StateFlow<ObjectScanState> = _scanState.asStateFlow()
 
-    private val imageLabeler: ImageLabeler = ImageLabeling.getClient(
-        ImageLabelerOptions.Builder()
-            .setConfidenceThreshold(0.7f)
-            .build()
-    )
+    // Lazy initialization of the image labeler
+    private val imageLabeler: ImageLabeler by lazy {
+        try {
+            ImageLabeling.getClient(
+                ImageLabelerOptions.Builder()
+                    .setConfidenceThreshold(0.7f)
+                    .build()
+            )
+        } catch (e: Exception) {
+            // Log the exception and rethrow
+            android.util.Log.e("ObjectScanViewModel", "Failed to initialize ML Kit: ${e.message}", e)
+            throw e
+        }
+    }
 
     @OptIn(ExperimentalGetImage::class)
     fun analyzeImage(imageProxy: ImageProxy) {
@@ -45,8 +56,35 @@ class ObjectScanViewModel : ViewModel() {
 
         val mediaImage = imageProxy.image
         if (mediaImage != null) {
-            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            try {
+                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                processImageWithLabeler(image)
+            } catch (e: Exception) {
+                handleAnalysisError(e)
+            }
+        } else {
+            _scanState.update {
+                it.copy(
+                    error = "Immagine non disponibile",
+                    isScanning = false
+                )
+            }
+        }
+    }
 
+    fun analyzeBitmap(bitmap: Bitmap) {
+        _scanState.update { it.copy(isScanning = true, error = null) }
+
+        try {
+            val image = InputImage.fromBitmap(bitmap, 0)
+            processImageWithLabeler(image)
+        } catch (e: Exception) {
+            handleAnalysisError(e)
+        }
+    }
+
+    private fun processImageWithLabeler(image: InputImage) {
+        try {
             imageLabeler.process(image)
                 .addOnSuccessListener { labels ->
                     if (labels.isNotEmpty()) {
@@ -70,51 +108,21 @@ class ObjectScanViewModel : ViewModel() {
                     }
                 }
                 .addOnFailureListener { e ->
-                    _scanState.update {
-                        it.copy(
-                            error = "Errore nell'analisi: ${e.message}",
-                            isScanning = false
-                        )
-                    }
+                    handleAnalysisError(e)
                 }
+        } catch (e: Exception) {
+            handleAnalysisError(e)
         }
     }
 
-    fun analyzeBitmap(bitmap: Bitmap) {
-        _scanState.update { it.copy(isScanning = true, error = null) }
-
-        val image = InputImage.fromBitmap(bitmap, 0)
-
-        imageLabeler.process(image)
-            .addOnSuccessListener { labels ->
-                if (labels.isNotEmpty()) {
-                    val topLabel = labels[0]
-                    _scanState.update {
-                        it.copy(
-                            recognizedLabel = topLabel.text,
-                            confidenceScore = topLabel.confidence,
-                            isScanning = false
-                        )
-                    }
-                    // Cerca informazioni sull'oggetto riconosciuto
-                    fetchObjectDetails(topLabel.text)
-                } else {
-                    _scanState.update {
-                        it.copy(
-                            error = "Nessun oggetto riconosciuto",
-                            isScanning = false
-                        )
-                    }
-                }
-            }
-            .addOnFailureListener { e ->
-                _scanState.update {
-                    it.copy(
-                        error = "Errore nell'analisi: ${e.message}",
-                        isScanning = false
-                    )
-                }
-            }
+    private fun handleAnalysisError(e: Exception) {
+        _scanState.update {
+            it.copy(
+                error = "Errore nell'analisi: ${e.message}",
+                isScanning = false
+            )
+        }
+        android.util.Log.e("ObjectScanViewModel", "Image analysis error", e)
     }
 
     private fun fetchObjectDetails(objectName: String) {
@@ -122,7 +130,7 @@ class ObjectScanViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getObjects()
                 if (response.isSuccessful) {
-                    val objects = response.body() ?: emptyList()
+                    val objects = response.body()?.results ?: emptyList()
                     val matchedObject = objects.find {
                         it.name.equals(objectName, ignoreCase = true) ||
                                 objectName.contains(it.name, ignoreCase = true) ||

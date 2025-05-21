@@ -30,7 +30,7 @@ class CommentViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getPostComments(postId)
                 if (response.isSuccessful) {
-                    val comments = response.body() ?: emptyList()
+                    val comments = response.body()?.results ?: emptyList()
                     _uiState.update { it.copy(comments = comments, isLoading = false) }
                 } else {
                     _uiState.update {

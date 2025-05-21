@@ -3,6 +3,7 @@ activityComposeVersion = "1.8.2"
 agp = "8.8.0"
 cameraCore = "1.4.2"
 converterGson = "2.11.0"
+imageLabeling = "17.0.9"
 kotlin = "2.0.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -21,6 +22,7 @@ mapsComposeVersion = "2.11.0"
 playServicesLocation = "21.3.0"
 playServicesLocationVersion = "21.0.1"
 playServicesMaps = "19.2.0"
+playServicesMlkitImageLabelingVersion = "16.0.8"
 retrofit = "2.11.0"
 retrofitVersion = "2.9.0"
 runtimeLivedata = "1.8.1"
@@ -43,7 +45,9 @@ androidx-lifecycle-runtime-ktx-v262 = { module = "androidx.lifecycle:lifecycle-r
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+gms-play-services-mlkit-image-labeling = { module = "com.google.android.gms:play-services-mlkit-image-labeling", version.ref = "playServicesMlkitImageLabelingVersion" }
 google-maps-compose = { module = "com.google.android.libraries.maps:maps-compose", version.ref = "mapsComposeVersion" }
+image-labeling = { module = "com.google.mlkit:image-labeling", version.ref = "imageLabeling" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

@@ -8,10 +8,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASE_URL = "https://c682-79-8-186-194.ngrok-free.app/"
+    private const val BASE_URL = "https://7884-79-8-186-194.ngrok-free.app/"
     private var authToken: String? = null
 
-    // Funzione per impostare il token di autenticazione
     fun setAuthToken(token: String) {
         authToken = token
         Log.d("RetrofitInstance", "Token impostato: $token")

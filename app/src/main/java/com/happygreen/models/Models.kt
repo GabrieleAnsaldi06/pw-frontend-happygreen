@@ -2,6 +2,12 @@ package com.happygreen.models
 
 import java.util.Date
 
+data class PaginatedResponse<T>(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<T>
+)
 // Modello per il profilo utente
 data class UserProfile(
     val id: Int,
@@ -11,7 +17,7 @@ data class UserProfile(
     val points: Int = 0,
     val createdAt: String,
     val updatedAt: String,
-    val badges: List<Badge> = emptyList()
+    val badges: List<Badge>? = null
 )
 
 // Modello per i badge/achievements
@@ -146,7 +152,7 @@ data class Challenge(
 // Modello per la partecipazione alle sfide
 data class ChallengeParticipation(
     val id: Int,
-    val userId: Int,
+    val username: String,
     val challengeId: Int,
     val completed: Boolean,
     val joinedAt: String,

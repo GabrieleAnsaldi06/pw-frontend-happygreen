@@ -30,7 +30,7 @@ class PostViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getPosts(groupId)
                 if (response.isSuccessful) {
-                    val posts = response.body() ?: emptyList()
+                    val posts = response.body()?.results ?: emptyList()
                     _uiState.update { it.copy(posts = posts, isLoading = false) }
                 } else {
                     _uiState.update {
