@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,7 +19,8 @@ import com.happygreen.viewmodels.BadgeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BadgesScreen(
-    badgeViewModel: BadgeViewModel = viewModel()
+    badgeViewModel: BadgeViewModel = viewModel(),
+    onBack: () -> Boolean
 ) {
     val uiState by badgeViewModel.uiState.collectAsState()
     var selectedBadge by remember { mutableStateOf<Badge?>(null) }

@@ -33,7 +33,10 @@ class GroupViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getGroups()
                 if (response.isSuccessful) {
-                    val groups = response.body()?.results ?: emptyList()
+                    val groups = response.body()?.results?.map { group ->
+                        // Ensure members is never null
+                        group.copy(members = group.members ?: emptyList())
+                    } ?: emptyList()
                     _uiState.update { it.copy(groups = groups, isLoading = false) }
                 } else {
                     _uiState.update {
@@ -43,17 +46,10 @@ class GroupViewModel : ViewModel() {
                         )
                     }
                 }
-            } catch (e: IOException) {
-                _uiState.update {
-                    it.copy(
-                        error = "Errore di rete nel caricamento dei gruppi: ${e.message}",
-                        isLoading = false
-                    )
-                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        error = "Errore imprevisto nel caricamento dei gruppi: ${e.message}",
+                        error = "Errore nel caricamento dei gruppi: ${e.message}",
                         isLoading = false
                     )
                 }

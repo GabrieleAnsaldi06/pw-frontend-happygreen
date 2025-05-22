@@ -35,10 +35,17 @@ data class Group(
     val name: String,
     val description: String,
     val creatorId: Int,
-    val createdAt: String,
-    val updatedAt: String,
-    val members: List<GroupMembership> = emptyList()
-)
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val members: List<GroupMembership>? = null
+) {
+    // Add a helper property to safely get members
+    val membersList: List<GroupMembership>
+        get() = members ?: emptyList()
+
+    val membersCount: Int
+        get() = membersList.size
+}
 
 // Modello per l'appartenenza ai gruppi
 data class GroupMembership(

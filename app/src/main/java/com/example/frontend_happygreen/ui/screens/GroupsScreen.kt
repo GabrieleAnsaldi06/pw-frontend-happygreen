@@ -19,7 +19,8 @@ import com.happygreen.viewmodels.GroupViewModel
 @Composable
 fun GroupsScreen(
     groupViewModel: GroupViewModel = viewModel(),
-    onGroupClick: (Int) -> Unit
+    onGroupClick: (Int) -> Unit,
+    onBack: () -> Unit
 ) {
     val uiState by groupViewModel.uiState.collectAsState()
     var showCreateGroupDialog by remember { mutableStateOf(false) }
@@ -218,13 +219,13 @@ fun GroupCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Membri: ${group.members.size}",
+                    text = "Membri: ${group.membersCount}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Text(
-                    text = "Creato il: ${formatDate(group.createdAt)}",
+                    text = "Creato il: ${group.createdAt?.let { formatDate(it) }}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

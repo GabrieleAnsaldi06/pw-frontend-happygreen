@@ -1,7 +1,6 @@
 package com.example.frontend_happygreen.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,16 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.happygreen.models.Group
-import com.happygreen.models.Post
 import com.happygreen.viewmodels.GroupViewModel
 import com.happygreen.viewmodels.PostViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +25,8 @@ fun GroupDetailScreen(
     groupViewModel: GroupViewModel = viewModel(),
     postViewModel: PostViewModel = viewModel(),
     onBackClick: () -> Unit,
-    onPostClick: (Int) -> Unit
+    onPostClick: (Int) -> Unit,
+    onCreatePost: () -> Unit
 ) {
     val groupState by groupViewModel.uiState.collectAsState()
     val postState by postViewModel.uiState.collectAsState()
@@ -278,10 +274,10 @@ fun GroupInfoCard(group: Group) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                MemberCountChip(memberCount = group.members.size)
+                MemberCountChip(memberCount = group.membersCount)
 
                 Text(
-                    text = "Creato il: ${formatDate(group.createdAt)}",
+                    text = "Creato il: ${group.createdAt?.let { formatDate(it) }}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -460,5 +456,5 @@ fun ErrorCard(error: String?, onRetry: () -> Unit) {
 fun isMember(group: Group): Boolean {
     // Per questa implementazione, assumiamo che l'utente sia membro se il gruppo ha membri
     // In una vera app, confronteresti l'ID dell'utente corrente con gli ID dei membri
-    return group.members.isNotEmpty()
+    return group.members?.isNotEmpty() ?: false
 }

@@ -22,7 +22,7 @@ import com.happygreen.viewmodels.ObjectScanViewModel
 import androidx.lifecycle.ViewModelProvider
 
 @Composable
-fun CameraScanScreen() {
+fun CameraScanScreen(onNavigateToBarcodeScan: () -> Unit, onScanResult: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 

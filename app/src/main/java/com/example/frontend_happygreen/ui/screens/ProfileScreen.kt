@@ -14,18 +14,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.happygreen.models.Badge
+import com.happygreen.viewmodels.AuthViewModel
 import com.happygreen.viewmodels.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     profileViewModel: ProfileViewModel = viewModel(),
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToBadges: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
     val profile = uiState.userProfile

@@ -11,7 +11,8 @@ import com.happygreen.viewmodels.QuizViewModel
 
 @Composable
 fun QuizScreen(
-    quizViewModel: QuizViewModel = viewModel()
+    quizViewModel: QuizViewModel = viewModel(),
+    onBack: () -> Boolean
 ) {
     val uiState by quizViewModel.uiState.collectAsState()
 

@@ -45,7 +45,8 @@ fun PostNavigation(
                 onBackClick = onBackToGroups,
                 onPostClick = { postId ->
                     navController.navigate("post_detail/$postId")
-                }
+                },
+                onCreatePost = { navController.navigate("create_post/$groupId") }
             )
         }
 

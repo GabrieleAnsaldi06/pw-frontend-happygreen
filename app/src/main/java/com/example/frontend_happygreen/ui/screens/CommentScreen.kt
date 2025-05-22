@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
@@ -13,31 +14,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.happygreen.models.Comment
 import com.happygreen.models.Post
 import com.happygreen.viewmodels.CommentViewModel
+import com.happygreen.viewmodels.PostViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommentScreen(
+fun CommentsScreen(
     postId: Int,
-    post: Post?,
+    onBack: () -> Unit,
     commentViewModel: CommentViewModel = viewModel(),
-    onBackClick: () -> Unit
+    postViewModel: PostViewModel = viewModel()
 ) {
-    val uiState by commentViewModel.uiState.collectAsState()
+    val commentUiState by commentViewModel.uiState.collectAsState()
+    val postUiState by postViewModel.uiState.collectAsState()
     val context = LocalContext.current
     var commentText by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     var isSubmitting by remember { mutableStateOf(false) }
 
-    // Carica i commenti quando lo schermo viene visualizzato
+    // Carica il post e i commenti quando lo schermo viene visualizzato
     LaunchedEffect(postId) {
+        postViewModel.getPostDetails(postId)
         commentViewModel.loadComments(postId)
     }
 
@@ -45,33 +51,45 @@ fun CommentScreen(
     DisposableEffect(Unit) {
         onDispose {
             commentViewModel.resetState()
+            postViewModel.clearSelectedPost()
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(post?.title ?: "Commenti") },
+                title = {
+                    Text(
+                        text = postUiState.selectedPost?.title ?: "Commenti",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Torna indietro"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         bottomBar = {
             Surface(
-                tonalElevation = 3.dp,
+                tonalElevation = 8.dp,
+                shadowElevation = 8.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.Bottom
                 ) {
                     OutlinedTextField(
                         value = commentText,
@@ -81,24 +99,27 @@ fun CommentScreen(
                             .weight(1f)
                             .padding(end = 8.dp),
                         enabled = !isSubmitting,
-                        singleLine = true
+                        minLines = 1,
+                        maxLines = 4,
+                        shape = RoundedCornerShape(24.dp)
                     )
 
-                    IconButton(
+                    FilledIconButton(
                         onClick = {
-                            if (commentText.isBlank()) {
+                            if (commentText.trim().isBlank()) {
                                 Toast.makeText(context, "Il commento non può essere vuoto", Toast.LENGTH_SHORT).show()
-                                return@IconButton
+                                return@FilledIconButton
                             }
 
                             isSubmitting = true
                             scope.launch {
                                 commentViewModel.addComment(
-                                    content = commentText,
+                                    content = commentText.trim(),
                                     postId = postId,
                                     onSuccess = {
                                         commentText = ""
                                         isSubmitting = false
+                                        Toast.makeText(context, "Commento aggiunto!", Toast.LENGTH_SHORT).show()
                                     },
                                     onError = { error ->
                                         Toast.makeText(context, error, Toast.LENGTH_LONG).show()
@@ -107,20 +128,20 @@ fun CommentScreen(
                                 )
                             }
                         },
-                        enabled = commentText.isNotBlank() && !isSubmitting,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
+                        enabled = commentText.trim().isNotBlank() && !isSubmitting,
+                        modifier = Modifier.size(48.dp)
                     ) {
                         if (isSubmitting) {
                             CircularProgressIndicator(
                                 strokeWidth = 2.dp,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Send,
-                                contentDescription = "Invia commento"
+                                contentDescription = "Invia commento",
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
@@ -133,97 +154,159 @@ fun CommentScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (post != null) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Mostra i dettagli del post in testa
-                    PostDetailHeader(post)
+            when {
+                postUiState.isLoading && postUiState.selectedPost == null -> {
+                    // Caricamento iniziale del post
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Caricamento post...")
+                    }
+                }
 
-                    Divider()
-
-                    // Commenti
-                    Box(modifier = Modifier.weight(1f)) {
-                        if (uiState.isLoading && uiState.comments.isEmpty()) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        } else if (uiState.error != null && uiState.comments.isEmpty()) {
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Errore nel caricamento dei commenti",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = uiState.error ?: "Errore sconosciuto",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = { commentViewModel.loadComments(postId) }
-                                ) {
-                                    Text(text = "Riprova")
-                                }
-                            }
-                        } else if (uiState.comments.isEmpty()) {
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Ancora nessun commento",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Sii il primo a commentare questo post",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                items(uiState.comments) { comment ->
-                                    CommentItem(comment = comment)
-                                }
-                            }
-
-                            // Mostra indicatore di caricamento durante il refresh o caricamento più commenti
-                            if (uiState.isLoading) {
-                                LinearProgressIndicator(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.TopCenter)
-                                )
-                            }
+                postUiState.error != null && postUiState.selectedPost == null -> {
+                    // Errore nel caricamento del post
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Errore nel caricamento del post",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = postUiState.error ?: "Errore sconosciuto",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { postViewModel.getPostDetails(postId) }
+                        ) {
+                            Text("Riprova")
                         }
                     }
                 }
-            } else {
-                // Mostra messaggio se il post non è disponibile
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Post non disponibile",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onBackClick) {
-                        Text("Torna indietro")
+
+                postUiState.selectedPost != null -> {
+                    // Post caricato con successo
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Header del post
+                        PostDetailHeader(postUiState.selectedPost!!)
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+
+                        // Sezione commenti
+                        Box(modifier = Modifier.weight(1f)) {
+                            when {
+                                commentUiState.isLoading && commentUiState.comments.isEmpty() -> {
+                                    Column(
+                                        modifier = Modifier.align(Alignment.Center),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        CircularProgressIndicator()
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text("Caricamento commenti...")
+                                    }
+                                }
+
+                                commentUiState.error != null && commentUiState.comments.isEmpty() -> {
+                                    Column(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "Errore nel caricamento dei commenti",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = commentUiState.error ?: "Errore sconosciuto",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Button(
+                                            onClick = { commentViewModel.loadComments(postId) }
+                                        ) {
+                                            Text("Riprova")
+                                        }
+                                    }
+                                }
+
+                                commentUiState.comments.isEmpty() -> {
+                                    Column(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "💬",
+                                            fontSize = 48.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            text = "Ancora nessun commento",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Sii il primo a commentare questo post!",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        // Header con conteggio commenti
+                                        item {
+                                            Text(
+                                                text = "${commentUiState.comments.size} commenti",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(bottom = 8.dp)
+                                            )
+                                        }
+
+                                        items(
+                                            items = commentUiState.comments,
+                                            key = { comment -> comment.id }
+                                        ) { comment ->
+                                            CommentItem(comment = comment)
+                                        }
+                                    }
+
+                                    // Indicatore di caricamento durante il refresh
+                                    if (commentUiState.isLoading) {
+                                        LinearProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .align(Alignment.TopCenter)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -233,47 +316,71 @@ fun CommentScreen(
 
 @Composable
 fun PostDetailHeader(post: Post) {
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Text(
-            text = post.title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "Autore: ${post.authorUsername}",
-            style = MaterialTheme.typography.bodySmall
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = post.content,
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (post.locationName != null) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
             Text(
-                text = "📍 ${post.locationName}",
-                style = MaterialTheme.typography.bodySmall
+                text = post.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-        }
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = formatPostDate(post.createdAt),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "di ${post.authorUsername}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Text(
+                    text = formatPostDate(post.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = post.content,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 20.sp
+            )
+
+            if (post.locationName != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📍",
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = post.locationName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -282,20 +389,23 @@ fun CommentItem(comment: Comment) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = comment.authorUsername,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
 
                 Text(
@@ -309,35 +419,50 @@ fun CommentItem(comment: Comment) {
 
             Text(
                 text = comment.content,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 18.sp
             )
         }
     }
 }
 
-// Utilità per formattare le date dei commenti (più breve)
+// Utilità per formattare le date dei commenti
 fun formatCommentDate(dateString: String): String {
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val date = inputFormat.parse(dateString)
+        val date = inputFormat.parse(dateString) ?: return dateString
 
-        val outputFormat = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
-        outputFormat.format(date ?: Date())
+        val now = Date()
+        val diffInMillis = now.time - date.time
+        val diffInMinutes = diffInMillis / (1000 * 60)
+        val diffInHours = diffInMinutes / 60
+        val diffInDays = diffInHours / 24
+
+        when {
+            diffInMinutes < 1 -> "Ora"
+            diffInMinutes < 60 -> "${diffInMinutes}m"
+            diffInHours < 24 -> "${diffInHours}h"
+            diffInDays < 7 -> "${diffInDays}g"
+            else -> {
+                val outputFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
+                outputFormat.format(date)
+            }
+        }
     } catch (e: Exception) {
         dateString
     }
 }
 
-// Utilità per formattare le date dei post (più completa)
+// Utilità per formattare le date dei post
 fun formatPostDate(dateString: String): String {
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val date = inputFormat.parse(dateString)
+        val date = inputFormat.parse(dateString) ?: return dateString
 
         val outputFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        outputFormat.format(date ?: Date())
+        outputFormat.format(date)
     } catch (e: Exception) {
         dateString
     }

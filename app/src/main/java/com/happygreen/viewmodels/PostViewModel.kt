@@ -117,8 +117,8 @@ class PostViewModel : ViewModel() {
                     latitude = latitude,
                     longitude = longitude,
                     locationName = locationName,
-                    createdAt = "", // Il server assegnerà la data
-                    updatedAt = ""  // Il server assegnerà la data
+                    createdAt = "Never", // Il server assegnerà la data
+                    updatedAt = "Never"  // Il server assegnerà la data
                 )
 
                 val response = RetrofitInstance.apiService.createPost(newPost)

@@ -22,7 +22,8 @@ import com.happygreen.viewmodels.BarcodeScanViewModel
 @Composable
 fun BarcodeScanScreen(
     barcodeScanViewModel: BarcodeScanViewModel = viewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onScanResult: Any
 ) {
     val scanState by barcodeScanViewModel.scanState.collectAsState()
 
