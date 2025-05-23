@@ -3,6 +3,7 @@ package com.happygreen.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.happygreen.data.RetrofitInstance
+import com.happygreen.models.CreatePostRequest
 import com.happygreen.models.Post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -121,7 +122,7 @@ class PostViewModel : ViewModel() {
                     updatedAt = "Never"  // Il server assegnerà la data
                 )
 
-                val response = RetrofitInstance.apiService.createPost(newPost)
+                val response = RetrofitInstance.apiService.createPost(CreatePostRequest(title = newPost.title, content = newPost.content, group = newPost.groupId, latitude = newPost.latitude, longitude = newPost.longitude, locationName = newPost.locationName))
 
                 if (response.isSuccessful) {
                     loadPosts(groupId) // Ricarica la lista aggiornata

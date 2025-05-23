@@ -32,7 +32,7 @@ interface ApiService {
     suspend fun getPosts(@Query("group") groupId: Int? = null): Response<PaginatedResponse<Post>>
 
     @POST("api/posts/")
-    suspend fun createPost(@Body post: Post): Response<Post>
+    suspend fun createPost(@Body post: CreatePostRequest): Response<Post>
 
     @GET("api/posts/{id}/")
     suspend fun getPost(@Path("id") postId: Int): Response<Post>

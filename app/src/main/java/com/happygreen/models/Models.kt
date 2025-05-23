@@ -56,6 +56,15 @@ data class GroupMembership(
     val joinedAt: String
 )
 
+data class CreatePostRequest(
+    val title: String,
+    val content: String,
+    val group: Int,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationName: String? = null
+)
+
 // Modello per i post
 data class Post(
     val id: Int,
