@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.example.frontend_happygreen.ui.screens.formatDate
+import com.example.frontend_happygreen.utils.DateUtils.formatDate
 import com.happygreen.viewmodels.CommentViewModel
 import com.happygreen.viewmodels.PostViewModel
 
@@ -136,7 +136,7 @@ fun PostDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Pubblicato da: ${post.authorUsername}",
+                            text = "Pubblicato da: ${post.authorUsername ?: "Sconosciuto"}",
                             style = MaterialTheme.typography.bodyMedium
                         )
 

@@ -2,7 +2,9 @@ package com.happygreen.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.frontend_happygreen.utils.DateUtils
 import com.happygreen.data.RetrofitInstance
+import com.happygreen.data.TokenManager
 import com.happygreen.models.CreatePostRequest
 import com.happygreen.models.Post
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +26,9 @@ class PostViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(PostsUiState())
     val uiState: StateFlow<PostsUiState> = _uiState.asStateFlow()
+
+    // Ottieni il TokenManager per accedere alle informazioni dell'utente
+    private val tokenManager = TokenManager.getInstance()
 
     fun loadPosts(groupId: Int? = null) {
         viewModelScope.launch {
@@ -107,28 +112,49 @@ class PostViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val newPost = Post(
-                    id = 0, // Il server assegnerà l'ID effettivo
+                // Crea direttamente la richiesta senza creare un oggetto Post completo
+                val createPostRequest = CreatePostRequest(
                     title = title,
                     content = content,
-                    authorId = 0,  // Il server determinerà l'utente corrente
-                    authorUsername = "", // Il server assegnerà il nome utente
-                    groupId = groupId,
-                    imageUrl = imageUrl,
+                    group = groupId,  // Nota: usa 'group' non 'groupId'
                     latitude = latitude,
                     longitude = longitude,
-                    locationName = locationName,
-                    createdAt = "Never", // Il server assegnerà la data
-                    updatedAt = "Never"  // Il server assegnerà la data
+                    locationName = locationName
                 )
 
-                val response = RetrofitInstance.apiService.createPost(CreatePostRequest(title = newPost.title, content = newPost.content, group = newPost.groupId, latitude = newPost.latitude, longitude = newPost.longitude, locationName = newPost.locationName))
+                val response = RetrofitInstance.apiService.createPost(createPostRequest)
 
                 if (response.isSuccessful) {
-                    loadPosts(groupId) // Ricarica la lista aggiornata
+                    // Dopo la creazione del post, aggiorniamo la lista locale
+                    // per includere il nuovo post con le informazioni dell'utente corrente
+                    response.body()?.let { createdPost ->
+                        // Ottieni il nome utente corrente
+                        val currentUsername = tokenManager.getUsername() ?: "Utente"
+                        val currentDate = DateUtils.getCurrentDateString()
+
+                        // Crea un post con le informazioni complete per l'UI
+                        val completePost = createdPost.copy(
+                            authorUsername = if (createdPost.authorUsername.isNullOrEmpty()) currentUsername else createdPost.authorUsername,
+                            createdAt = createdPost.createdAt ?: currentDate,
+                            updatedAt = createdPost.updatedAt ?: currentDate
+                        )
+
+                        // Aggiorna la lista dei post aggiungendo il nuovo post
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                posts = listOf(completePost) + currentState.posts,
+                                isLoading = false
+                            )
+                        }
+                    }
+
+                    // Ricarica anche la lista dal server per essere sicuri
+                    loadPosts(groupId)
                     onSuccess()
                 } else {
-                    onError("Errore nella creazione del post: ${response.message()}")
+                    // Log dell'errore per debug
+                    val errorBody = response.errorBody()?.string()
+                    onError("Errore nella creazione del post: $errorBody")
                 }
             } catch (e: IOException) {
                 onError("Errore di rete nella creazione del post: ${e.message}")

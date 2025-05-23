@@ -71,14 +71,14 @@ data class Post(
     val title: String,
     val content: String,
     val authorId: Int,
-    val authorUsername: String,
+    val authorUsername: String? = null,
     val groupId: Int,
     val imageUrl: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationName: String? = null,
-    val createdAt: String,
-    val updatedAt: String
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 // Modello per i commenti

@@ -349,7 +349,7 @@ fun PostDetailHeader(post: Post) {
                 )
 
                 Text(
-                    text = formatPostDate(post.createdAt),
+                    text = formatPostDate(post.createdAt ?: ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

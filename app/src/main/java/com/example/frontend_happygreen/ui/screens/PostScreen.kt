@@ -19,11 +19,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.frontend_happygreen.utils.DateUtils
 import com.happygreen.models.Post
 import com.happygreen.viewmodels.PostViewModel
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -183,7 +182,7 @@ fun PostItem(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Autore: ${post.authorUsername}",
+                text = "Autore: ${post.authorUsername ?: "Sconosciuto"}",
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -208,7 +207,7 @@ fun PostItem(
             }
 
             Text(
-                text = formatDate(post.createdAt),
+                text = DateUtils.formatDate(post.createdAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -350,19 +349,5 @@ fun CreatePostDialog(
                 }
             }
         }
-    }
-}
-
-// Funzione di utilità per formattare le date
-fun formatDate(dateString: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-        inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-        val date = inputFormat.parse(dateString)
-
-        val outputFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        outputFormat.format(date ?: Date())
-    } catch (e: Exception) {
-        dateString
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.frontend_happygreen.utils.DateUtils.formatDate
 import com.happygreen.models.Group
 import com.happygreen.viewmodels.GroupViewModel
 
