@@ -1,6 +1,7 @@
 package com.example.frontend_happygreen.ui.screens
 
 import android.widget.Toast
+import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import com.example.frontend_happygreen.utils.DateUtils.formatDate
 import com.happygreen.viewmodels.CommentViewModel
 import com.happygreen.viewmodels.PostViewModel

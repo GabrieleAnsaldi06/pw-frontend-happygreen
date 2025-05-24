@@ -217,6 +217,7 @@ fun GroupDetailScreen(
                                 showJoinDialog = false
                                 Toast.makeText(context, "Ti sei unito al gruppo!", Toast.LENGTH_SHORT).show()
                                 // Ricarica i dettagli del gruppo
+                                postViewModel.loadPosts(groupId)
                                 groupViewModel.getGroupDetails(groupId)
                             },
                             onError = { error ->

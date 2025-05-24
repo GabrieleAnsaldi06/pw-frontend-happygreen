@@ -64,7 +64,13 @@ class GroupViewModel : ViewModel() {
                 val response = RetrofitInstance.apiService.getGroup(groupId)
                 if (response.isSuccessful) {
                     val group = response.body()
-                    _uiState.update { it.copy(selectedGroup = group, isLoading = false) }
+                    val membersResponse = RetrofitInstance.apiService.getGroupMembers(groupId)
+                    val members = if (membersResponse.isSuccessful) {
+                        membersResponse.body() ?: emptyList()
+                    } else emptyList()
+
+                    val groupWithMembers = group?.copy(members = members)
+                    _uiState.update { it.copy(selectedGroup = groupWithMembers, isLoading = false) }
                 } else {
                     _uiState.update {
                         it.copy(

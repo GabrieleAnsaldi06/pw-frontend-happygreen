@@ -1,6 +1,7 @@
 [versions]
 activityComposeVersion = "1.8.2"
 agp = "8.8.0"
+barcodeScanning = "17.3.0"
 cameraCore = "1.4.2"
 converterGson = "2.11.0"
 imageLabeling = "17.0.9"
@@ -32,6 +33,7 @@ imageLabelingCommon = "18.1.0"
 imageLabelingDefaultCommon = "17.0.0"
 playServicesMlkitBarcodeScanning = "18.3.1"
 foundationAndroid = "1.7.5"
+appcompat = "1.6.1"
 
 [libraries]
 androidx-activity-compose-v182 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -44,6 +46,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-lifecycle-runtime-ktx-v262 = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtxVersion" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose" }
+barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 gms-play-services-mlkit-image-labeling = { module = "com.google.android.gms:play-services-mlkit-image-labeling", version.ref = "playServicesMlkitImageLabelingVersion" }
 google-maps-compose = { module = "com.google.android.libraries.maps:maps-compose", version.ref = "mapsComposeVersion" }
@@ -80,6 +83,7 @@ image-labeling-common = { group = "com.google.mlkit", name = "image-labeling-com
 image-labeling-default-common = { group = "com.google.mlkit", name = "image-labeling-default-common", version.ref = "imageLabelingDefaultCommon" }
 play-services-mlkit-barcode-scanning = { group = "com.google.android.gms", name = "play-services-mlkit-barcode-scanning", version.ref = "playServicesMlkitBarcodeScanning" }
 androidx-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

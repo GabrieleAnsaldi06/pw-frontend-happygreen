@@ -36,7 +36,12 @@ class PostViewModel : ViewModel() {
             try {
                 val response = RetrofitInstance.apiService.getPosts(groupId)
                 if (response.isSuccessful) {
-                    val posts = response.body()?.results ?: emptyList()
+                    val posts = response.body()?.results?.map { post ->
+                        post.copy(
+                            authorUsername = post.authorUsername ?: "Anonimo",
+                            createdAt = post.createdAt ?: DateUtils.getCurrentDateString()
+                        )
+                    } ?: emptyList()
                     _uiState.update { it.copy(posts = posts, isLoading = false) }
                 } else {
                     _uiState.update {

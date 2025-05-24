@@ -1,10 +1,10 @@
-
 package com.happygreen.viewmodels
 
+import android.app.Application
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -27,7 +27,7 @@ data class BarcodeScanState(
     val error: String? = null
 )
 
-class BarcodeScanViewModel : ViewModel() {
+class BarcodeScanViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _scanState = MutableStateFlow(BarcodeScanState())
     val scanState: StateFlow<BarcodeScanState> = _scanState.asStateFlow()
@@ -44,6 +44,7 @@ class BarcodeScanViewModel : ViewModel() {
 
     private val scanner: BarcodeScanner = BarcodeScanning.getClient(options)
 
+    // Metodo per analizzare ImageProxy (per CameraX)
     @OptIn(ExperimentalGetImage::class)
     fun analyzeImage(imageProxy: ImageProxy) {
         _scanState.update { it.copy(isScanning = true, error = null) }
@@ -90,7 +91,24 @@ class BarcodeScanViewModel : ViewModel() {
                         )
                     }
                 }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
         }
+    }
+
+    // Nuovo metodo per gestire direttamente una stringa barcode
+    fun processBarcodeString(barcodeValue: String) {
+        _scanState.update {
+            it.copy(
+                isScanning = true,
+                error = null,
+                barcodeValue = barcodeValue
+            )
+        }
+
+        // Cerca il prodotto dal codice a barre
+        fetchProductDetails(barcodeValue)
     }
 
     private fun fetchProductDetails(barcode: String) {
@@ -99,22 +117,31 @@ class BarcodeScanViewModel : ViewModel() {
                 val response = RetrofitInstance.apiService.getProductByBarcode(barcode)
                 if (response.isSuccessful) {
                     val product = response.body()
-                    _scanState.update { it.copy(product = product) }
+                    _scanState.update { it.copy(product = product, isScanning = false) }
                 } else if (response.code() == 404) {
                     // Il prodotto non è nel database, cerchiamo informazioni generiche
                     lookupProductExternally(barcode)
                 } else {
                     _scanState.update {
-                        it.copy(error = "Errore nel recupero dei dettagli: ${response.message()}")
+                        it.copy(
+                            error = "Errore nel recupero dei dettagli: ${response.message()}",
+                            isScanning = false
+                        )
                     }
                 }
             } catch (e: IOException) {
                 _scanState.update {
-                    it.copy(error = "Errore di rete: ${e.message}")
+                    it.copy(
+                        error = "Errore di rete: ${e.message}",
+                        isScanning = false
+                    )
                 }
             } catch (e: Exception) {
                 _scanState.update {
-                    it.copy(error = "Errore: ${e.message}")
+                    it.copy(
+                        error = "Errore: ${e.message}",
+                        isScanning = false
+                    )
                 }
             }
         }
@@ -126,15 +153,21 @@ class BarcodeScanViewModel : ViewModel() {
                 val response = RetrofitInstance.apiService.lookupProduct(mapOf("barcode" to barcode))
                 if (response.isSuccessful) {
                     val product = response.body()
-                    _scanState.update { it.copy(product = product) }
+                    _scanState.update { it.copy(product = product, isScanning = false) }
                 } else {
                     _scanState.update {
-                        it.copy(error = "Prodotto non trovato nel database")
+                        it.copy(
+                            error = "Prodotto non trovato nel database",
+                            isScanning = false
+                        )
                     }
                 }
             } catch (e: Exception) {
                 _scanState.update {
-                    it.copy(error = "Errore nella ricerca esterna: ${e.message}")
+                    it.copy(
+                        error = "Errore nella ricerca esterna: ${e.message}",
+                        isScanning = false
+                    )
                 }
             }
         }

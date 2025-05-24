@@ -1,9 +1,12 @@
 package com.happygreen.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.happygreen.data.RetrofitInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class QuizQuestion(
     val question: String,
@@ -21,23 +24,28 @@ data class QuizUiState(
 
 class QuizViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        QuizUiState(
-        questions = listOf(
-            QuizQuestion(
-                "Qual è il materiale più riciclabile?",
-                listOf("Plastica", "Carta", "Vetro", "Metallo"),
-                2
-            ),
-            QuizQuestion(
-                "Qual è l'energia più sostenibile?",
-                listOf("Carbone", "Petrolio", "Solare", "Gas naturale"),
-                2
-            )
-        )
-    )
-    )
+    init {
+        loadQuizzes()
+    }
+
+    private val _uiState = MutableStateFlow(QuizUiState())
     val uiState: StateFlow<QuizUiState> = _uiState
+
+    private fun loadQuizzes() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.apiService.getQuizzes()
+                if (response.isSuccessful) {
+                    val quizzes = response.body()?.results ?: emptyList()
+                    if (quizzes.isNotEmpty()) {
+                        _uiState.update { it.copy(questions = quizzes) }
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
 
     fun selectAnswer(index: Int) {
         _uiState.update { it.copy(selectedAnswerIndex = index) }

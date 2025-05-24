@@ -71,7 +71,7 @@ data class Post(
     val title: String,
     val content: String,
     val authorId: Int,
-    val authorUsername: String? = null,
+    val authorUsername: String = "",
     val groupId: Int,
     val imageUrl: String? = null,
     val latitude: Double? = null,

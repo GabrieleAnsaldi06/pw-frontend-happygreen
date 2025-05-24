@@ -226,7 +226,7 @@ fun GroupCard(
                 )
 
                 Text(
-                    text = "Creato il: ${group.createdAt?.let { formatDate(it) }}",
+                    text = "Creato il: ${group.createdAt?.let { formatDate(it) } ?: "Data non disponibile"}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

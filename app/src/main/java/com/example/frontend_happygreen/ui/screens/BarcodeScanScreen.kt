@@ -1,6 +1,11 @@
 package com.example.frontend_happygreen.ui.screens
 
 import SustainabilityScoreBar
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,11 +19,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 import com.happygreen.viewmodels.BarcodeScanViewModel
+import androidx.camera.core.Preview
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BarcodeScanScreen(
     barcodeScanViewModel: BarcodeScanViewModel = viewModel(),
@@ -26,161 +39,199 @@ fun BarcodeScanScreen(
     onScanResult: Any
 ) {
     val scanState by barcodeScanViewModel.scanState.collectAsState()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Top bar with back button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
-            }
-
-            Text(
-                text = "Scansione Codice a Barre",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center
-            )
-
-            // Empty spacer for symmetry
-            Spacer(modifier = Modifier.width(48.dp))
-        }
-
-        if (scanState.isScanning) {
-            // Loading indicator
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Ricerca prodotto in corso...",
-                style = MaterialTheme.typography.bodyLarge
-            )
-        } else if (scanState.error != null) {
-            // Error state
-            Icon(
-                imageVector = Icons.Default.Error,
-                contentDescription = "Errore",
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(16.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Si è verificato un errore",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = scanState.error ?: "Errore sconosciuto",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(onClick = { barcodeScanViewModel.resetScanState() }) {
-                Text("Riprova")
-            }
-        } else if (scanState.product != null) {
-            // Successfully found product
-            val product = scanState.product!!
-
-            ProductDetailsCard(product)
-        } else if (scanState.barcodeValue != null) {
-            // Recognized barcode but no product details
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Prodotto non trovato",
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Codice a barre rilevato",
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Codice a barre: ${scanState.barcodeValue}",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Purtroppo non sono disponibili informazioni su questo prodotto nel nostro database.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Button(onClick = onBack) {
-                    Text("Indietro")
-                }
-
-                Button(onClick = { barcodeScanViewModel.resetScanState() }) {
-                    Text("Nuova scansione")
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header
+        TopAppBar(
+            title = { Text("Scansione Codice a Barre") },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                 }
             }
-        } else {
-            // No result yet - initial state
-            Icon(
-                imageVector = Icons.Default.QrCodeScanner,
-                contentDescription = "Scansiona codice a barre",
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        when {
+            scanState.product != null -> {
+                // Mostra i dettagli del prodotto
+                ProductDetailsCard(scanState.product!!)
+            }
 
-            Text(
-                text = "Scansiona un codice a barre",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            scanState.error != null -> {
+                // Stato di errore
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Errore",
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Punta la fotocamera verso il codice a barre di un prodotto per ottenere informazioni sulla sua sostenibilità.",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
+                    Text(
+                        text = "Errore nella scansione",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = scanState.error ?: "Errore sconosciuto",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { barcodeScanViewModel.resetScanState() }
+                    ) {
+                        Text("Riprova")
+                    }
+                }
+            }
+
+            scanState.barcodeValue != null && scanState.product == null -> {
+                // Barcode rilevato ma prodotto non trovato
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    if (scanState.isScanning) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Ricerca prodotto...")
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Prodotto non trovato",
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Prodotto non trovato",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Codice: ${scanState.barcodeValue}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Il prodotto non è presente nel nostro database.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { barcodeScanViewModel.resetScanState() }
+                        ) {
+                            Text("Scansiona di nuovo")
+                        }
+                    }
+                }
+            }
+
+            else -> {
+                // Camera preview per la scansione
+                BarcodeScanner(
+                    onBarcodeDetected = { barcode ->
+                        // Usa il metodo corretto per processare la stringa del barcode
+                        barcodeScanViewModel.processBarcodeString(barcode)
+                    }
+                )
+            }
         }
     }
+}
+
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
+@Composable
+fun BarcodeScanner(onBarcodeDetected: (String) -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    AndroidView(
+        factory = { ctx ->
+            PreviewView(ctx).apply {
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                cameraProviderFuture.addListener({
+                    try {
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = Preview.Builder().build().also {
+                            it.setSurfaceProvider(surfaceProvider)
+                        }
+
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
+                            .also {
+                                it.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
+                                    val scanner = BarcodeScanning.getClient()
+                                    val inputImage = InputImage.fromMediaImage(
+                                        imageProxy.image!!,
+                                        imageProxy.imageInfo.rotationDegrees
+                                    )
+                                    scanner.process(inputImage)
+                                        .addOnSuccessListener { barcodes ->
+                                            barcodes.firstOrNull()?.rawValue?.let { barcode ->
+                                                onBarcodeDetected(barcode)
+                                            }
+                                        }
+                                        .addOnFailureListener { e ->
+                                            // Log dell'errore
+                                            android.util.Log.e("BarcodeScanner", "Errore nella scansione", e)
+                                        }
+                                        .addOnCompleteListener {
+                                            imageProxy.close()
+                                        }
+                                }
+                            }
+
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageAnalysis
+                            )
+                        } catch (e: Exception) {
+                            android.util.Log.e("BarcodeScanner", "Errore nel binding della camera", e)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("BarcodeScanner", "Errore nel provider della camera", e)
+                    }
+                }, ContextCompat.getMainExecutor(ctx))
+            }
+        },
+        modifier = Modifier.fillMaxSize()
+    )
 }
 
 @Composable
@@ -189,6 +240,7 @@ fun ProductDetailsCard(product: com.happygreen.models.Product) {
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
+            .padding(16.dp)
     ) {
         // Product icon/image placeholder
         Box(
@@ -199,23 +251,12 @@ fun ProductDetailsCard(product: com.happygreen.models.Product) {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            if (product.imageUrl != null) {
-                // Se si volesse implementare il caricamento dell'immagine, si potrebbe usare una libreria come Coil
-                // Qui mostro solo l'icona per semplicità
-                Icon(
-                    imageVector = if (product.ecoFriendly) Icons.Default.EmojiNature else Icons.Default.Info,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = if (product.ecoFriendly) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Icon(
-                    imageVector = if (product.ecoFriendly) Icons.Default.EmojiNature else Icons.Default.Info,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = if (product.ecoFriendly) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
-                )
-            }
+            Icon(
+                imageVector = if (product.ecoFriendly) Icons.Default.EmojiNature else Icons.Default.Info,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = if (product.ecoFriendly) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
