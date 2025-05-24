@@ -19,7 +19,8 @@ data class QuizUiState(
     val currentIndex: Int = 0,
     val selectedAnswerIndex: Int = -1,
     val score: Int = 0,
-    val isQuizFinished: Boolean = false
+    val isQuizFinished: Boolean = false,
+    val isLoading: Boolean = false
 )
 
 class QuizViewModel : ViewModel() {

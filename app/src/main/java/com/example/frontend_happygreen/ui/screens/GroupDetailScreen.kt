@@ -18,10 +18,6 @@ import com.example.frontend_happygreen.utils.DateUtils.formatDate
 import com.happygreen.models.Group
 import com.happygreen.viewmodels.GroupViewModel
 import com.happygreen.viewmodels.PostViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

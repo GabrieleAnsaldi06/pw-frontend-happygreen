@@ -2,16 +2,22 @@ package com.example.frontend_happygreen.ui.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.frontend_happygreen.ui.theme.*
 import com.happygreen.models.Challenge
 import com.happygreen.viewmodels.AuthViewModel
 import com.happygreen.viewmodels.ChallengeViewModel
@@ -245,64 +251,81 @@ fun ChallengeItem(
     showCompleteButton: Boolean,
     onComplete: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        onClick = onClick
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    challenge.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    "${challenge.points} punti",
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                challenge.description,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                challenge.endDate?.let {
-                    Text(
-                        "Scadenza: $it",
-                        style = MaterialTheme.typography.bodySmall
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(Color.White, LavenderBlush.copy(alpha = 0.3f))
                     )
-                } ?: Text(
-                    "Nessuna scadenza",
-                    style = MaterialTheme.typography.bodySmall
+                )
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        challenge.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = DelftBlue,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = Saffron.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            "${challenge.points} punti",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Saffron,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    challenge.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = DelftBlue.copy(alpha = 0.8f),
+                    maxLines = 3
                 )
 
-                if (showCompleteButton) {
-                    Button(
-                        onClick = onComplete,
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text("Completa")
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    challenge.endDate?.let {
+                        Text(
+                            "Scadenza: $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = DelftBlue.copy(alpha = 0.6f)
+                        )
+                    }
+
+                    if (showCompleteButton) {
+                        Button(
+                            onClick = onComplete,
+                            colors = ButtonDefaults.buttonColors(containerColor = TicklePink),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Completa", fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
             }

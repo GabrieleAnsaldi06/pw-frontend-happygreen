@@ -84,7 +84,8 @@ fun MainAppScaffold(
         Screen.Groups,
         Screen.Map,
         Screen.Challenges,
-        Screen.Profile
+        Screen.Profile,
+        Screen.Quiz
     )
 
     var selectedItem by remember { mutableStateOf(0) }
@@ -331,4 +332,5 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Map : Screen("map", "Mappa", Icons.Default.Map)
     object Challenges : Screen("challenges", "Sfide", Icons.Default.EmojiEvents)
     object Profile : Screen("profile", "Profilo", Icons.Default.Person)
+    object Quiz : Screen("quiz", "Quiz", Icons.Default.Quiz)
 }

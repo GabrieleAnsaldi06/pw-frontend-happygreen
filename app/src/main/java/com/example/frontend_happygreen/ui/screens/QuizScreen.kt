@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,47 +24,62 @@ fun QuizScreen(
             onRestart = { quizViewModel.restartQuiz() }
         )
     } else {
-        val currentQuestion = uiState.questions[uiState.currentIndex]
+        if (uiState.questions.isEmpty()) {
+            // Stato di caricamento o errore
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Nessun quiz disponibile")
+                }
+            }
+        }
+        else{
+            val currentQuestion = uiState.questions[uiState.currentIndex]
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text("Domanda ${uiState.currentIndex + 1} di ${uiState.questions.size}", style = MaterialTheme.typography.titleMedium)
-            Text(currentQuestion.question, style = MaterialTheme.typography.titleLarge)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Domanda ${uiState.currentIndex + 1} di ${uiState.questions.size}", style = MaterialTheme.typography.titleMedium)
+                Text(currentQuestion.question, style = MaterialTheme.typography.titleLarge)
 
-            currentQuestion.options.forEachIndexed { index, option ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(
+                currentQuestion.options.forEachIndexed { index, option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = uiState.selectedAnswerIndex == index,
+                                onClick = { quizViewModel.selectAnswer(index) }
+                            )
+                            .padding(8.dp)
+                    ) {
+                        RadioButton(
                             selected = uiState.selectedAnswerIndex == index,
                             onClick = { quizViewModel.selectAnswer(index) }
                         )
-                        .padding(8.dp)
-                ) {
-                    RadioButton(
-                        selected = uiState.selectedAnswerIndex == index,
-                        onClick = { quizViewModel.selectAnswer(index) }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(option)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(option)
+                    }
                 }
-            }
 
-            Button(
-                onClick = { quizViewModel.nextQuestion() },
-                enabled = uiState.selectedAnswerIndex != -1,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    if (uiState.currentIndex == uiState.questions.lastIndex)
-                        "Fine"
-                    else
-                        "Avanti"
-                )
+                Button(
+                    onClick = { quizViewModel.nextQuestion() },
+                    enabled = uiState.selectedAnswerIndex != -1,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (uiState.currentIndex == uiState.questions.lastIndex)
+                            "Fine"
+                        else
+                            "Avanti"
+                    )
+                }
             }
         }
     }

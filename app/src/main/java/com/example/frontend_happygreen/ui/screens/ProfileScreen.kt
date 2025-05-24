@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,10 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.frontend_happygreen.ui.theme.*
 import com.happygreen.models.Badge
 import com.happygreen.viewmodels.AuthViewModel
 import com.happygreen.viewmodels.ProfileViewModel
@@ -37,197 +42,398 @@ fun ProfileScreen(
         profileViewModel.loadAvailableBadges()
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Top bar with logout button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = onLogout) {
-                Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
-            }
-        }
-
-        // Profile header
-        if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-        } else if (profile != null) {
-            // Profile avatar (placeholder or actual avatar)
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = profile.username.first().toString().uppercase(),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.align(Alignment.Center)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        DelftBlue,
+                        VistaBlue,
+                        LavenderBlush
+                    )
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Username
-            Text(
-                text = profile.username,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
             )
-
-            // Bio if available
-            if (profile.bio.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = profile.bio,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Points card
-            ElevatedCard(
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header con logout
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.End
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                IconButton(
+                    onClick = onLogout,
+                    modifier = Modifier
+                        .background(
+                            Color.White.copy(alpha = 0.2f),
+                            CircleShape
+                        )
                 ) {
-                    Text(
-                        text = "Punti Eco",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = profile.points.toString(),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    LinearProgressIndicator(
-                        progress = calculateLevelProgress(profile.points),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Livello ${calculateLevel(profile.points)}",
-                        style = MaterialTheme.typography.bodyMedium
+                    Icon(
+                        Icons.Default.ExitToApp,
+                        contentDescription = "Logout",
+                        tint = Color.White
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Badges section
-            BadgesSection(
-                badges = profile.badges ?: emptyList(),
-                nextBadges = profileViewModel.calculateNextBadges()
-            )
-
             Spacer(modifier = Modifier.height(16.dp))
 
-        } else if (uiState.error != null) {
-            // Error message
-            Text(
-                text = "Si è verificato un errore: ${uiState.error}",
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(16.dp)
-            )
+            if (uiState.isLoading) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(32.dp)
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Caricamento profilo...",
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+            } else if (profile != null) {
+                // Avatar con gradiente
+                Box(
+                    modifier = Modifier
+                        .size(140.dp)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(Saffron, TicklePink)
+                            ),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = profile.username.first().toString().uppercase(),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-            Button(onClick = { profileViewModel.refreshProfile() }) {
-                Text("Riprova")
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Username
+                Text(
+                    text = "@${profile.username}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                // Bio se disponibile
+                if (profile.bio.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = profile.bio,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Card punti con design moderno
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White,
+                                        LavenderBlush.copy(alpha = 0.5f)
+                                    ),
+                                    radius = 800f
+                                )
+                            )
+                            .padding(24.dp)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = Saffron
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = "Punti Eco",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = DelftBlue
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = profile.points.toString(),
+                                style = MaterialTheme.typography.displayLarge,
+                                color = DelftBlue,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Progress bar con gradiente
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(12.dp)
+                                    .background(
+                                        DelftBlue.copy(alpha = 0.1f),
+                                        RoundedCornerShape(6.dp)
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(calculateLevelProgress(profile.points))
+                                        .height(12.dp)
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                colors = listOf(Saffron, TicklePink)
+                                            ),
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Livello ${calculateLevel(profile.points)}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = DelftBlue
+                                )
+
+                                Text(
+                                    text = "Prossimo: ${(calculateLevel(profile.points) * 100)}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = DelftBlue.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Card badge con contenuto migliorato
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        EnhancedBadgesSection(
+                            badges = profile.badges ?: emptyList(),
+                            nextBadges = profileViewModel.calculateNextBadges()
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            } else if (uiState.error != null) {
+                // Error message con design migliorato
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = ErrorRed
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Si è verificato un errore: ${uiState.error}",
+                            color = ErrorRed,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { profileViewModel.refreshProfile() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ErrorRed
+                            )
+                        ) {
+                            Text("Riprova")
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun BadgesSection(
+fun EnhancedBadgesSection(
     badges: List<Badge>,
     nextBadges: List<Badge>
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Title
-        Text(
-            text = "I Tuoi Badge",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "I Tuoi Badge",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = DelftBlue
+            )
 
-        if (badges.isEmpty()) {
-            // No badges yet
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Saffron.copy(alpha = 0.2f)
             ) {
                 Text(
-                    text = "Non hai ancora guadagnato nessun badge. Completa sfide e quiz per ottenerli!",
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
+                    text = "${badges.size}",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Saffron,
+                    fontWeight = FontWeight.Bold
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (badges.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = LavenderBlush.copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp),
+                        tint = DelftBlue.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Non hai ancora guadagnato nessun badge",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = DelftBlue.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Completa sfide e quiz per ottenerli!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DelftBlue.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         } else {
-            // Badges list
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(badges) { badge ->
-                    BadgeItem(badge)
+                    EnhancedBadgeItem(badge, isEarned = true)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Próximos badges section
         Text(
             text = "Prossimi Badge",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 8.dp)
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = DelftBlue
         )
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         if (nextBadges.isEmpty()) {
-            // No badges left to earn
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = SuccessGreen.copy(alpha = 0.1f)
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    text = "Hai sbloccato tutti i badge disponibili. Complimenti!",
+                Row(
                     modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = SuccessGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Complimenti! Hai sbloccato tutti i badge disponibili",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = SuccessGreen
+                    )
+                }
             }
         } else {
-            // Next badges list
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(nextBadges.take(3)) { badge ->
-                    NextBadgeItem(badge)
+                    EnhancedBadgeItem(badge, isEarned = false)
                 }
             }
         }
@@ -235,115 +441,56 @@ fun BadgesSection(
 }
 
 @Composable
-fun BadgeItem(badge: Badge) {
+fun EnhancedBadgeItem(badge: Badge, isEarned: Boolean) {
     Card(
-        modifier = Modifier
-            .size(150.dp)
-            .padding(4.dp)
+        modifier = Modifier.size(120.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isEarned) Saffron.copy(alpha = 0.1f) else DelftBlue.copy(alpha = 0.05f)
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Badge icon (use a placeholder)
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
                 contentDescription = badge.name,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier = Modifier.size(32.dp),
+                tint = if (isEarned) Saffron else DelftBlue.copy(alpha = 0.5f)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Badge name
             Text(
                 text = badge.name,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Badge description
-            Text(
-                text = badge.description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (isEarned) DelftBlue else DelftBlue.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
-                maxLines = 3,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                maxLines = 2
             )
-        }
-    }
-}
 
-@Composable
-fun NextBadgeItem(badge: Badge) {
-    Card(
-        modifier = Modifier
-            .size(150.dp)
-            .padding(4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Badge icon (use a placeholder) with locked aspect
-            Box {
-                Icon(
-                    imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = badge.name,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Locked",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .align(Alignment.BottomEnd),
-                    tint = MaterialTheme.colorScheme.primary
+            if (!isEarned) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${badge.pointsRequired} pt",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TicklePink,
+                    fontWeight = FontWeight.Bold
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Badge name
-            Text(
-                text = badge.name,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Badge requirements
-            Text(
-                text = "${badge.pointsRequired} punti richiesti",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }
 
-// Helper functions for calculating level and progress
-fun calculateLevel(points: Int): Int {
-    return (points / 100) + 1
-}
-
+fun calculateLevel(points: Int): Int = (points / 100) + 1
 fun calculateLevelProgress(points: Int): Float {
     val level = calculateLevel(points)
     val pointsForCurrentLevel = (level - 1) * 100
     val pointsForNextLevel = level * 100
-
     return (points - pointsForCurrentLevel).toFloat() / (pointsForNextLevel - pointsForCurrentLevel)
 }
